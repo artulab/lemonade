@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CLI/CLI.hpp>
+#include <lemon/cluster/cluster_settings.h>
 #include <optional>
 #include <string>
 
@@ -16,6 +17,7 @@ struct ServerConfig {
     int log_max_file_size_mb = -1;        // -1 = not specified on CLI, use config.json value
     int log_max_files = -1;               // -1 = not specified on CLI, use config.json value
     int watchdog_fd = -1;                 // -1 = not specified on CLI, supervisor pipe descriptor (POSIX only)
+    cluster::ClusterSettings cluster;
 };
 
 class CLIParser {
@@ -44,6 +46,7 @@ private:
     ServerConfig config_;
     CLI::Option* cache_dir_opt_ = nullptr;
     CLI::Option* config_dir_opt_ = nullptr;
+    std::string cluster_role_ = "standalone";
     bool should_continue_ = true;
     int exit_code_ = 0;
 };

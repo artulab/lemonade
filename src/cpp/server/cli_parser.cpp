@@ -2,6 +2,10 @@
 #include <lemon/utils/path_utils.h>
 #include <lemon/version.h>
 
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
+
 #define APP_NAME "lemond"
 #define APP_DESC APP_NAME " - Lightweight LLM server"
 
@@ -46,6 +50,26 @@ CLIParser::CLIParser()
     app_.add_option("--watchdog-fd", config_.watchdog_fd, "Internal supervisor watchdog pipe descriptor")
         ->type_name("FD")
         ->group("");
+
+    const std::string cluster_group = "Cluster (experimental)";
+    app_.add_option("--role", cluster_role_, "Cluster role of this node")
+        ->type_name("ROLE")
+        ->check(CLI::IsMember({"standalone", "coordinator", "worker"}, CLI::ignore_case))
+        ->capture_default_str()
+        ->group(cluster_group);
+
+    app_.add_option("--name", config_.cluster.node_name, "Node name shown in the cluster (default: hostname)")
+        ->type_name("NAME")
+        ->group(cluster_group);
+
+    app_.add_option("--controller", config_.cluster.controller_url, "Coordinator base URL, e.g. http://10.0.0.1:13305 (worker only)")
+        ->type_name("URL")
+        ->group(cluster_group);
+
+    app_.add_option("--join-token", config_.cluster.join_token,
+                    "Token for enrolling with the coordinator (worker only; prefer LEMONADE_CLUSTER_JOIN_TOKEN)")
+        ->type_name("TOKEN")
+        ->group(cluster_group);
 }
 
 int CLIParser::parse(int argc, char** argv) {
@@ -54,6 +78,24 @@ int CLIParser::parse(int argc, char** argv) {
         // Portable installs (custom cache_dir, no config_dir) keep files together.
         if (cache_dir_opt_->count() > 0 && config_dir_opt_->count() == 0) {
             config_.config_dir = config_.cache_dir;
+        }
+        std::transform(cluster_role_.begin(), cluster_role_.end(), cluster_role_.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (cluster_role_ == "coordinator") {
+            config_.cluster.role = cluster::ClusterRole::Coordinator;
+        } else if (cluster_role_ == "worker") {
+            config_.cluster.role = cluster::ClusterRole::Worker;
+        }
+        // Read the token from the environment only for workers, so a token
+        // exported in a shared shell does not break a standalone lemond.
+        if (config_.cluster.role == cluster::ClusterRole::Worker && config_.cluster.join_token.empty()) {
+            if (const char* env = std::getenv("LEMONADE_CLUSTER_JOIN_TOKEN")) {
+                config_.cluster.join_token = env;
+            }
+        }
+        std::string cluster_error = cluster::validate_cluster_settings(config_.cluster);
+        if (!cluster_error.empty()) {
+            throw CLI::ValidationError(cluster_error);
         }
         should_continue_ = true;
         exit_code_ = 0;

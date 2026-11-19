@@ -3797,6 +3797,13 @@ if(BUILD_TESTING AND EXISTS "${_CLI_RUNTIME_OVERRIDE_TEST_SRC}")
     add_cpp_ci_test(CliRuntimeOverrideTest CI ON COMMAND test_cli_runtime_override)
 endif()
 
+set(_CLUSTER_SETTINGS_TEST_SRC "${CMAKE_CURRENT_SOURCE_DIR}/test/cpp/test_cluster_settings.cpp")
+if(BUILD_TESTING AND EXISTS "${_CLUSTER_SETTINGS_TEST_SRC}")
+    add_executable(test_cluster_settings test/cpp/test_cluster_settings.cpp)
+    target_link_libraries(test_cluster_settings PRIVATE lemonade-server-core)
+    add_cpp_ci_test(ClusterSettingsTest CI ON COMMAND test_cluster_settings)
+endif()
+
 set(_LOG_ROTATION_TEST_SRC "${CMAKE_CURRENT_SOURCE_DIR}/test/cpp/test_log_rotation.cpp")
 if(BUILD_TESTING AND EXISTS "${_LOG_ROTATION_TEST_SRC}")
     add_executable(test_log_rotation test/cpp/test_log_rotation.cpp)
