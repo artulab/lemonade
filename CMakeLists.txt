@@ -1356,6 +1356,13 @@ if(BUILD_TESTING AND EXISTS "${LLAMACPP_REQUEST_TEST_SOURCE}")
     add_cpp_ci_test(llamacpp_request CI OFF COMMAND test_llamacpp_request)
 endif()
 
+set(LLAMACPP_RUNTIME_ENV_TEST_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/test/cpp/test_llamacpp_runtime_env.cpp")
+if(BUILD_TESTING AND EXISTS "${LLAMACPP_RUNTIME_ENV_TEST_SOURCE}")
+    add_executable(test_llamacpp_runtime_env ${LLAMACPP_RUNTIME_ENV_TEST_SOURCE})
+    target_link_libraries(test_llamacpp_runtime_env PRIVATE lemonade-server-core)
+    add_cpp_ci_test(llamacpp_runtime_env CI ON COMMAND test_llamacpp_runtime_env)
+endif()
+
 set(LLAMACPP_SYSTEMONE_TEST_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/test/cpp/test_llamacpp_systemone.cpp")
 if(BUILD_TESTING AND EXISTS "${LLAMACPP_SYSTEMONE_TEST_SOURCE}")
     add_executable(test_llamacpp_systemone
